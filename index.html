@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>For You ✨</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+        }
+
+        body {
+            height: 100vh;
+            overflow: hidden;
+            background: radial-gradient(ellipse at center, #1a0033 0%, #0a0015 50%, #000000 100%);
+            background-attachment: fixed;
+            position: relative;
+            font-family: 'Playfair Display', 'Georgia', serif;
+            color: #f8f8ff;
+            cursor: grab;
+            touch-action: none;
+        }
+
+        body:active {
+            cursor: grabbing;
+        }
+
+        #audio {
+            display: none;
+        }
+
+        .bg-particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .particle {
+            position: absolute;
+            width: 3px;
+            height: 3px;
+            background: rgba(255, 200, 255, 0.7);
+            border-radius: 50%;
+            animation: float 25s infinite linear;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(-100px) rotate(360deg); opacity: 0; }
+        }
+
+        .card {
+            position: absolute;
+            width: min(95vw, 380px);
+            /* AUTO HEIGHT - FITS ALL CONTENT */
+            height: auto;
+            min-height: min(95vw * 1.9, 680px);
+            max-height: min(95vw * 2.2, 780px);
+            background: rgba(255, 255, 255, 0.12);
+            backdrop-filter: blur(25px);
+            border-radius: 28px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 
+                0 35px 60px rgba(0, 0, 0, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.25);
+            padding: 40px 30px 30px 30px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            text-align: center;
+            z-index: 10;
+            cursor: grab;
+            touch-action: none;
+            /* NO OVERFLOW HIDDEN - TEXT SHOWS FULL */
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            width: 32px;
+            height: 32px;
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 15;
+        }
+
+        .close-btn:hover {
+            background: rgba(255, 80, 80, 0.4);
+            transform: scale(1.1);
+            border-color: rgba(255, 80, 80, 0.6);
+        }
+
+        .card:active {
+            cursor: grabbing;
+            transform: scale(0.98) !important;
+            z-index: 20;
+            box-shadow: 0 45px 80px rgba(0, 0, 0, 0.5);
+        }
+
+        .card img {
+            width: 150px !important;
+            height: 150px !important;
+            object-fit: cover;
+            object-position: center top 20%;
+            border-radius: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 20px 45px rgba(0, 0, 0, 0.5);
+            border: 3px solid rgba(255, 255, 255, 0.25);
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+        }
+
+        .card:active img {
+            transform: scale(1.05);
+        }
+
+        .card-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            width: 100%;
+            padding: 0 5px;
+        }
+
+        .card h2 {
+            font-size: clamp(1.1rem, 4vw, 1.8rem);
+            font-weight: 400;
+            background: linear-gradient(135deg, #ffd4ff, #e6b3ff, #ffb3ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 15px;
+            line-height: 1.3;
+            flex-shrink: 0;
+        }
+
+        .card p {
+            font-size: clamp(0.9rem, 3.2vw, 1.1rem);
+            line-height: 1.6;
+            opacity: 0.95;
+            font-style: italic;
+            margin-bottom: 20px;
+            /* NO TRIMMING - FULL TEXT VISIBLE */
+        }
+
+        /* PERFECTLY VISIBLE POETS */
+        .poet {
+            font-size: clamp(0.9rem, 3.5vw, 1.1rem);
+            opacity: 1;
+            font-style: italic;
+            font-weight: 500;
+            color: #ffd4ff;
+            padding: 8px 15px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 25px;
+            border: 1px solid rgba(255, 212, 255, 0.4);
+            margin-top: 10px;
+            flex-shrink: 0;
+            box-shadow: 0 4px 15px rgba(255, 212, 255, 0.2);
+        }
+
+        .final {
+            background: rgba(255, 100, 150, 0.18) !important;
+            border-color: rgba(255, 100, 150, 0.6) !important;
+        }
+
+        .final h2, .final-guess h2 {
+            background: linear-gradient(135deg, #ff99cc, #ff66b3, #ff3399);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .final-guess {
+            background: rgba(100, 200, 255, 0.18) !important;
+            border-color: rgba(100, 200, 255, 0.6) !important;
+        }
+
+        .final-guess h2 {
+            background: linear-gradient(135deg, #99ccff, #66b3ff, #3399ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        @keyframes breathe {
+            0%, 100% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-12px) scale(1.03); }
+        }
+
+        .card {
+            animation: breathe 7s ease-in-out infinite;
+        }
+
+        @media (max-width: 480px) {
+            .card {
+                width: 92vw;
+                min-height: 78vw;
+                max-height: 90vw;
+                padding: 30px 25px 25px 25px;
+            }
+            
+            .card img {
+                width: 125px !important;
+                height: 125px !important;
+            }
+            
+            .close-btn {
+                width: 28px;
+                height: 28px;
+                font-size: 16px;
+                top: 12px;
+                right: 12px;
+            }
+        }
+
+        .tap-hint {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: clamp(1.3rem, 6vw, 1.8rem);
+            text-align: center;
+            opacity: 0.9;
+            z-index: 30;
+            pointer-events: none;
+            animation: pulse 2s infinite;
+            font-weight: 300;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.7; transform: translate(-50%, -50%) scale(1); }
+            50% { opacity: 1; transform: translate(-50%, -50%) scale(1.08); }
+        }
+
+        .glow {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(50px);
+            opacity: 0.4;
+        }
+
+        .glow-1 { width: 250px; height: 250px; background: radial-gradient(circle, #ff6b9d, transparent); top: 10%; left: 5%; animation: drift 30s infinite linear; }
+        .glow-2 { width: 200px; height: 200px; background: radial-gradient(circle, #a8e6cf, transparent); top: 50%; right: 10%; animation: drift 35s infinite linear reverse; }
+        .glow-3 { width: 220px; height: 220px; background: radial-gradient(circle, #ffd93d, transparent); bottom: 15%; left: 15%; animation: drift 40s infinite linear; }
+
+        @keyframes drift {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            100% { transform: translate(50px, -50px) rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-particles" id="particles"></div>
+    
+    <div class="glow glow-1"></div>
+    <div class="glow glow-2"></div>
+    <div class="glow glow-3"></div>
+    
+    <audio id="audio" loop>
+        <source src="1.mp3" type="audio/mpeg">
+    </audio>
+
+   
+
+    <!-- FINAL GUESS CARD -->
+    <div class="card final-guess" style="bottom: 20%; left: 20%;" data-img="10.jpg">
+        <div class="close-btn" onclick="closeCard(this)">✕</div>
+        <img src="10.jpg" alt="">
+        <div class="card-content">
+            <h2>Now Guess Who I Am? 🕵️‍♂️</h2>
+            <p>"All these feelings are real. If this made you smile… check your followers. I'm there waiting ✨<br><strong>Hint: One from your followers list</strong>"</p>
+            <div class="poet">- Your Secret Admirer, for you 😌</div>
+        </div>
+    </div>
+
+  <!-- REVERSED ORDER 10-1 WITH HEARTFELT LINES + POETS -->
+
+<div class="card" style="top: 55%; left: 8%;" data-img="9.jpg">
+    <div class="close-btn" onclick="closeCard(this)">✕</div>
+    <img src="9.jpg" alt="">
+    <div class="card-content">
+        <h2>You complete me</h2>
+        <p>"My days were empty till you appeared. Now every moment feels divinely shared."</p>
+        <div class="poet">- Maya Angelou, for you 😌</div>
+    </div>
+</div>
+
+<div class="card" style="bottom: 8%; right: 12%;" data-img="8.jpg">
+    <div class="close-btn" onclick="closeCard(this)">✕</div>
+    <img src="8.jpg" alt="">
+    <div class="card-content">
+        <h2>Perfect in every way</h2>
+        <p>"Your beauty radiates from within. I'm falling deeper with every thought of you."</p>
+        <div class="poet">- Wordsworth, for you 😌</div>
+    </div>
+</div>
+
+<div class="card" style="top: 35%; right: 8%;" data-img="7.jpg">
+    <div class="close-btn" onclick="closeCard(this)">✕</div>
+    <img src="7.jpg" alt="">
+    <div class="card-content">
+        <h2>Your voice haunts me</h2>
+        <p>"I replay your words in my dreams. You've captured my soul without even trying."</p>
+        <div class="poet">- John Keats, for you 😌</div>
+    </div>
+</div>
+
+<div class="card" style="bottom: 25%; right: 15%;" data-img="6.jpg">
+    <div class="close-btn" onclick="closeCard(this)">✕</div>
+    <img src="6.jpg" alt="">
+    <div class="card-content">
+        <h2>You're my everything</h2>
+        <p>"In a world of strangers, you feel like home. My heart beats your name silently."</p>
+        <div class="poet">- Rumi, for you 😌</div>
+    </div>
+</div>
+
+<div class="card final" style="top: 10%; right: 12%;" data-img="5.jpg">
+    <div class="close-btn" onclick="closeCard(this)">✕</div>
+    <img src="5.jpg" alt="">
+    <div class="card-content">
+        <h2>My secret confession</h2>
+        <p>"Sorry for stealing your pics. I had no one else. You became my heart's only light."</p>
+        <div class="poet">- Anonymous Poet, for you 😌</div>
+    </div>
+</div>
+
+<div class="card" style="top: 45%; left: 12%;" data-img="4.jpg">
+    <div class="close-btn" onclick="closeCard(this)">✕</div>
+    <img src="4.jpg" alt="">
+    <div class="card-content">
+        <h2>You make me alive</h2>
+        <p>"Your laughter is my heartbeat. You've become the reason my days feel complete."</p>
+        <div class="poet">- Kahlil Gibran, for you 😌</div>
+    </div>
+</div>
+
+<div class="card" style="bottom: 15%; left: 8%;" data-img="3.jpg">
+    <div class="close-btn" onclick="closeCard(this)">✕</div>
+    <img src="3.jpg" alt="">
+    <div class="card-content">
+        <h2>You're my muse</h2>
+        <p>"Your grace moves me like poetry. Every moment with you feels like a dream come true."</p>
+        <div class="poet">- Shakespeare, for you 😌</div>
+    </div>
+</div>
+
+<div class="card" style="top: 15%; right: 5%;" data-img="2.jpg">
+    <div class="close-btn" onclick="closeCard(this)">✕</div>
+    <img src="2.jpg" alt="">
+    <div class="card-content">
+        <h2>Your smile owns me</h2>
+        <p>"Every time you smile, my world lights up. I think of you more than words can say."</p>
+        <div class="poet">- Pablo Neruda, for you 😌</div>
+    </div>
+</div>
+
+<div class="card" style="top: 5%; left: 5%;" data-img="1.jpg">
+    <div class="close-btn" onclick="closeCard(this)">✕</div>
+    <img src="1.jpg" alt="">
+    <div class="card-content">
+        <h2>I fell for you</h2>
+        <p>"The moment I saw your eyes, my heart whispered 'she's the one I've been waiting for'."</p>
+        <div class="poet">- Rumi, for you 😌</div>
+    </div>
+</div>
+<script>
+const audio = document.getElementById('audio');
+audio.volume = 0.25;
+
+document.addEventListener('touchstart', playOnce, { once: true });
+document.addEventListener('click', playOnce, { once: true });
+
+function playOnce() {
+  audio.play().catch(() => {});
+}
+</script>
+
+    <script>
+        function closeCard(btn) {
+            const card = btn.closest('.card');
+            card.style.transition = 'all 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55)';
+            card.style.opacity = '0';
+            card.style.transform = 'scale(0.3) translateY(-50px) rotate(10deg)';
+            card.style.pointerEvents = 'none';
+            
+            setTimeout(() => {
+                card.remove();
+            }, 600);
+        }
+
+        class DraggableCard {
+            constructor(card) {
+                this.card = card;
+                this.img = card.querySelector('img');
+                this.isDragging = false;
+                this.startX = 0;
+                this.startY = 0;
+                this.currentX = parseFloat(getComputedStyle(card).left) || 0;
+                this.currentY = parseFloat(getComputedStyle(card).top) || 0;
+                this.init();
+            }
+
+            init() {
+                this.loadImage();
+                this.card.addEventListener('mousedown', this.startDrag.bind(this), { passive: false });
+                this.card.addEventListener('touchstart', (e) => {
+                    if (!e.target.closest('.close-btn')) {
+                        this.startDrag(e);
+                    }
+                }, { passive: false });
+                
+                document.addEventListener('mousemove', this.drag.bind(this), { passive: false });
+                document.addEventListener('touchmove', this.drag.bind(this), { passive: false });
+                
+                document.addEventListener('mouseup', this.endDrag.bind(this));
+                document.addEventListener('touchend', this.endDrag.bind(this));
+                document.addEventListener('touchcancel', this.endDrag.bind(this));
+            }
+
+            loadImage() {
+                const imgName = this.card.dataset.img;
+                this.img.src = imgName;
+                this.img.onerror = () => {
+                    this.img.style.background = 'linear-gradient(45deg, #ff6b9d, #ffd93d)';
+                    this.img.style.display = 'flex';
+                    this.img.style.alignItems = 'center';
+                    this.img.style.justifyContent = 'center';
+                    this.img.style.color = '#fff';
+                    this.img.style.fontSize = '14px';
+                    this.img.style.fontWeight = 'bold';
+                    this.img.textContent = 'Image';
+                };
+            }
+
+            startDrag(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                if (e.type === 'touchstart') {
+                    this.startX = e.touches[0].clientX - this.currentX;
+                    this.startY = e.touches[0].clientY - this.currentY;
+                } else {
+                    this.startX = e.clientX - this.currentX;
+                    this.startY = e.clientY - this.currentY;
+                }
+                
+                this.isDragging = true;
+                this.card.style.transition = 'none';
+                document.body.style.cursor = 'grabbing';
+            }
+
+            drag(e) {
+                if (!this.isDragging) return;
+                
+                e.preventDefault();
+                e.stopPropagation();
+                
+                let clientX, clientY;
+                if (e.type === 'touchmove') {
+                    clientX = e.touches[0].clientX;
+                    clientY = e.touches[0].clientY;
+                } else {
+                    clientX = e.clientX;
+                    clientY = e.clientY;
+                }
+
+                this.currentX = clientX - this.startX;
+                this.currentY = clientY - this.startY;
+
+                const rect = this.card.getBoundingClientRect();
+                const maxX = window.innerWidth - rect.width;
+                const maxY = window.innerHeight - rect.height;
+
+                this.currentX = Math.max(10, Math.min(maxX - 10, this.currentX));
+                this.currentY = Math.max(10, Math.min(maxY - 10, this.currentY));
+
+                this.card.style.left = this.currentX + 'px';
+                this.card.style.top = this.currentY + 'px';
+                this.card.style.transform = `translate3d(0, 0, 0) scale(0.98)`;
+            }
+
+            endDrag(e) {
+                if (this.isDragging) {
+                    this.isDragging = false;
+                    this.card.style.transition = 'all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+                    this.card.style.transform = 'translate3d(0, 0, 0)';
+                    document.body.style.cursor = 'grab';
+                }
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const cards = document.querySelectorAll('.card');
+            cards.forEach(card => new DraggableCard(card));
+
+            createParticles();
+
+            let hasInteracted = false;
+            const startExperience = (e) => {
+                if (!hasInteracted && !e.target.closest('.close-btn')) {
+                    hasInteracted = true;
+                    const hint = document.getElementById('tapHint');
+                    hint.style.transition = 'opacity 0.5s';
+                    hint.style.opacity = '0';
+                    
+                    const audio = document.getElementById('audio');
+                    audio.volume = 0.25;
+                    audio.play().catch(console.log);
+                    
+                    setTimeout(() => hint.remove(), 500);
+                }
+            };
+
+            document.addEventListener('click', startExperience, { once: true });
+            document.addEventListener('touchstart', startExperience, { once: true, passive: true });
+        });
+
+        function createParticles() {
+            const container = document.getElementById('particles');
+            for (let i = 0; i < 60; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 25 + 's';
+                particle.style.animationDuration = (20 + Math.random() * 20) + 's';
+                container.appendChild(particle);
+            }
+        }
+
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', (e) => {
+            const now = Date.now();
+            if (now - lastTouchEnd <= 300) {
+                e.preventDefault();
+            }
+            lastTouchEnd = now;
+        }, false);
+
+        document.addEventListener('contextmenu', e => e.preventDefault());
+    </script>
+</body>
+</html>
